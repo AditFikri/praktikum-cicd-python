@@ -1,13 +1,13 @@
-import pytest 
-from calculator import add, divide 
-
+import pytest
+from calculator import add, divide
+ 
 def test_add_basic():
-    assert add(2, 3) == 5 
-    assert add(-1, 1) == 0 
-
+    assert add(2, 3) == 5
+    assert add(-1, 1) == 0
+ 
 def test_divide_basic():
-    assert divide(10, 2) == 5 
-
+    assert divide(10, 2) == 5
+ 
 def test_divide_by_zero():
     with pytest.raises(ValueError):
-        divide(1, 0) 
+        divide(1, 0)
