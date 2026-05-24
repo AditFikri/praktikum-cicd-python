@@ -1,6 +1,4 @@
-name: Python CI Pipeline
-
-# Trigger: Pipeline berjalan setiap kali ada push atau Pull Request ke branch 'main'
+name: CI
 on:
   push:
     branches: [ "main" ]
@@ -8,35 +6,40 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest # Menggunakan server Ubuntu virtual milik GitHub
-
+  build-test:
+    runs-on: ubuntu-latest
     steps:
-    # Langkah 1: Mengambil kode dari repository ke server virtual
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v4
 
-    # Langkah 2: Menyiapkan lingkungan Python
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: "3.11"
 
-    # Langkah 3: Menginstall semua library yang dibutuhkan
     - name: Install dependencies
       run: |
-        python -m pip upgrade pip
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    # Langkah 4: Linting (Mengecek kerapian dan standar penulisan kode)
-    - name: Run Lint (flake8)
+    - name: Lint (flake8)
       run: |
-        # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings.
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
-    # Langkah 5: Menjalankan Automated Testing (Pytest)
-    - name: Run Test (pytest)
+    - name: Test with coverage
       run: |
-        pytest
+        pytest -q --cov=. --cov-report=xml --cov-report=term
+
+    - name: Enforce coverage threshold (80%)
+      run: |
+        python - << 'PY'
+        import xml.etree.ElementTree as ET
+        tree = ET.parse('coverage.xml')
+        root = tree.getroot()
+        lines_valid = int(root.get('lines-valid', '0'))
+        lines_covered = int(root.get('lines-covered', '0'))
+        pct = (lines_covered / lines_valid) * 100 if lines_valid else 0
+        print(f"Coverage: {pct:.2f}%")
+        assert pct >= 80, f"Coverage {pct:.2f}% < 80% threshold"
+        PY

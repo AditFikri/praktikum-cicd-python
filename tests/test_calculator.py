@@ -1,4 +1,4 @@
-from main import tambah, kurang
+from calculator import tambah, kurang
 
 def test_tambah():
     assert tambah(2, 3) == 5
